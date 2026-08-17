@@ -218,7 +218,9 @@ xmlns:dockCore=&quot;using:Dock.Model.Core&quot;
 <pre><code class="lang-xaml">&lt;UserControl xmlns=&quot;https://github.com/avaloniaui&quot;
              xmlns:x=&quot;http://schemas.microsoft.com/winfx/2006/xaml&quot;
              xmlns:local=&quot;using:YourApp&quot;
-             x:Class=&quot;YourApp.ItemsSourceExample&quot;&gt;
+             x:Class=&quot;YourApp.ItemsSourceExample&quot;
+             x:Name=&quot;RootView&quot;
+             x:DataType=&quot;local:MainViewModel&quot;&gt;
 
   &lt;UserControl.DataContext&gt;
     &lt;local:MainViewModel /&gt;
@@ -239,8 +241,8 @@ xmlns:dockCore=&quot;using:Dock.Model.Core&quot;
 
       &lt;RootDock Id=&quot;Root&quot; IsCollapsable=&quot;False&quot;&gt;
         &lt;DocumentDock Id=&quot;DocumentsPane&quot; 
-                      CanCreateDocument=&quot;True&quot;
-                      ItemsSource=&quot;{Binding Documents}&quot;&gt;
+                      CanCreateDocument=&quot;False&quot;
+                      ItemsSource=&quot;{Binding #RootView.((local:MainViewModel)DataContext).Documents}&quot;&gt;
           
           &lt;!-- Define how each document should be displayed --&gt;
           &lt;DocumentDock.DocumentTemplate&gt;
@@ -248,8 +250,12 @@ xmlns:dockCore=&quot;using:Dock.Model.Core&quot;
               &lt;StackPanel Margin=&quot;10&quot; x:DataType=&quot;Document&quot;&gt;
                 &lt;TextBlock Text=&quot;Document Title:&quot; FontWeight=&quot;Bold&quot;/&gt;
                 &lt;TextBox Text=&quot;{Binding Title}&quot; Margin=&quot;0,0,0,10&quot;/&gt;
-                &lt;TextBlock Text=&quot;Content:&quot; FontWeight=&quot;Bold&quot;/&gt;
-                &lt;TextBox Text=&quot;{Binding Context.Content}&quot; AcceptsReturn=&quot;True&quot; Height=&quot;200&quot; TextWrapping=&quot;Wrap&quot;/&gt;
+                &lt;StackPanel DataContext=&quot;{Binding Context}&quot;&gt;
+                  &lt;StackPanel x:DataType=&quot;local:MyDocumentModel&quot;&gt;
+                    &lt;TextBlock Text=&quot;Content:&quot; FontWeight=&quot;Bold&quot;/&gt;
+                    &lt;TextBox Text=&quot;{Binding Content}&quot; AcceptsReturn=&quot;True&quot; Height=&quot;200&quot; TextWrapping=&quot;Wrap&quot;/&gt;
+                  &lt;/StackPanel&gt;
+                &lt;/StackPanel&gt;
               &lt;/StackPanel&gt;
             &lt;/DocumentTemplate&gt;
           &lt;/DocumentDock.DocumentTemplate&gt;
@@ -261,7 +267,9 @@ xmlns:dockCore=&quot;using:Dock.Model.Core&quot;
 &lt;/UserControl&gt;
 </code></pre>
 <h3 id="step-4-bind-to-tooldock-in-xaml">Step 4: Bind to ToolDock in XAML</h3>
-<pre><code class="lang-xaml">&lt;ToolDock Id=&quot;ToolsPane&quot; Alignment=&quot;Left&quot; ItemsSource=&quot;{Binding Tools}&quot;&gt;
+<pre><code class="lang-xaml">&lt;ToolDock Id=&quot;ToolsPane&quot;
+          Alignment=&quot;Left&quot;
+          ItemsSource=&quot;{Binding #RootView.((local:MainViewModel)DataContext).Tools}&quot;&gt;
   &lt;ToolDock.ToolTemplate&gt;
     &lt;ToolTemplate&gt;
       &lt;StackPanel Margin=&quot;10&quot; x:DataType=&quot;Tool&quot;&gt;
@@ -289,7 +297,7 @@ xmlns:dockCore=&quot;using:Dock.Model.Core&quot;
 <li><code>CanClose</code> → Whether the document can be closed</li>
 </ul>
 </li>
-<li><strong>Data Context</strong>: Your model object becomes the <code>Context</code> of the created <code>Document</code>/<code>Tool</code> and is accessible via <code>{Binding Context.PropertyName}</code></li>
+<li><strong>Data Context</strong>: Your model object becomes the <code>Context</code> of the created <code>Document</code>/<code>Tool</code>; for compiled bindings, rebind a subtree to <code>Context</code> and set <code>x:DataType</code> to the model type.</li>
 </ol>
 <h3 id="advanced-examples">Advanced Examples</h3>
 <h4 id="custom-title-and-canclose-mapping">Custom Title and CanClose Mapping</h4>
@@ -303,17 +311,19 @@ xmlns:dockCore=&quot;using:Dock.Model.Core&quot;
 }
 </code></pre>
 <h4 id="with-commands-and-interactions">With Commands and Interactions</h4>
-<pre><code class="lang-xaml">&lt;DocumentDock ItemsSource=&quot;{Binding OpenFiles}&quot;&gt;
+<pre><code class="lang-xaml">&lt;DocumentDock ItemsSource=&quot;{Binding #RootWindow.((vm:MainViewModel)DataContext).OpenFiles}&quot;&gt;
   &lt;DocumentDock.DocumentTemplate&gt;
     &lt;DocumentTemplate&gt;
-      &lt;Grid RowDefinitions=&quot;Auto,*,Auto&quot; x:DataType=&quot;Document&quot;&gt;
-        &lt;TextBlock Grid.Row=&quot;0&quot; Text=&quot;{Binding Context.Path}&quot; FontSize=&quot;12&quot; Opacity=&quot;0.7&quot;/&gt;
-        &lt;TextBox Grid.Row=&quot;1&quot; Text=&quot;{Binding Context.Content}&quot; AcceptsReturn=&quot;True&quot;/&gt;
-        &lt;StackPanel Grid.Row=&quot;2&quot; Orientation=&quot;Horizontal&quot; HorizontalAlignment=&quot;Right&quot;&gt;
-          &lt;Button Content=&quot;Save&quot; Command=&quot;{Binding Context.SaveCommand}&quot; Margin=&quot;5&quot;/&gt;
-          &lt;Button Content=&quot;Revert&quot; Command=&quot;{Binding Context.RevertCommand}&quot; Margin=&quot;5&quot;/&gt;
-        &lt;/StackPanel&gt;
-      &lt;/Grid&gt;
+      &lt;ContentControl x:DataType=&quot;Document&quot; DataContext=&quot;{Binding Context}&quot;&gt;
+        &lt;Grid RowDefinitions=&quot;Auto,*,Auto&quot; x:DataType=&quot;local:FileModel&quot;&gt;
+          &lt;TextBlock Grid.Row=&quot;0&quot; Text=&quot;{Binding Path}&quot; FontSize=&quot;12&quot; Opacity=&quot;0.7&quot;/&gt;
+          &lt;TextBox Grid.Row=&quot;1&quot; Text=&quot;{Binding Content}&quot; AcceptsReturn=&quot;True&quot;/&gt;
+          &lt;StackPanel Grid.Row=&quot;2&quot; Orientation=&quot;Horizontal&quot; HorizontalAlignment=&quot;Right&quot;&gt;
+            &lt;Button Content=&quot;Save&quot; Command=&quot;{Binding SaveCommand}&quot; Margin=&quot;5&quot;/&gt;
+            &lt;Button Content=&quot;Revert&quot; Command=&quot;{Binding RevertCommand}&quot; Margin=&quot;5&quot;/&gt;
+          &lt;/StackPanel&gt;
+        &lt;/Grid&gt;
+      &lt;/ContentControl&gt;
     &lt;/DocumentTemplate&gt;
   &lt;/DocumentDock.DocumentTemplate&gt;
 &lt;/DocumentDock&gt;
@@ -543,7 +553,7 @@ var document = new Document
 <p><strong>Solutions</strong>:</p>
 <ol>
 <li>Ensure <code>DocumentTemplate</code> has proper <code>x:DataType=&quot;Document&quot;</code> on the root element</li>
-<li>Access your model properties via <code>{Binding Context.PropertyName}</code> not <code>{Binding PropertyName}</code></li>
+<li>For compiled bindings, rebind a subtree to <code>{Binding Context}</code> and set <code>x:DataType</code> to your model type</li>
 <li>Verify your model implements <code>INotifyPropertyChanged</code></li>
 <li>Check that your collection items have the expected property names (Title, Name, etc.)</li>
 </ol>
@@ -557,7 +567,9 @@ var document = new Document
 &lt;DocumentTemplate&gt;
   &lt;StackPanel x:DataType=&quot;Document&quot;&gt;
     &lt;TextBlock Text=&quot;{Binding Title}&quot;/&gt;
-    &lt;TextBlock Text=&quot;{Binding Context.Content}&quot;/&gt;
+    &lt;StackPanel DataContext=&quot;{Binding Context}&quot;&gt;
+      &lt;TextBlock x:DataType=&quot;vm:MyDocumentModel&quot; Text=&quot;{Binding Content}&quot;/&gt;
+    &lt;/StackPanel&gt;
   &lt;/StackPanel&gt;
 &lt;/DocumentTemplate&gt;
 </code></pre>
@@ -733,28 +745,30 @@ public class FileManagerViewModel : INotifyPropertyChanged
   &lt;/DockControl.Factory&gt;
   
   &lt;RootDock&gt;
-    &lt;DocumentDock ItemsSource=&quot;{Binding OpenFiles}&quot;&gt;
+    &lt;DocumentDock ItemsSource=&quot;{Binding #RootWindow.((vm:MainViewModel)DataContext).OpenFiles}&quot;&gt;
       &lt;DocumentDock.DocumentTemplate&gt;
         &lt;DocumentTemplate&gt;
-          &lt;Grid RowDefinitions=&quot;Auto,*,Auto&quot; x:DataType=&quot;Document&quot;&gt;
-            &lt;!-- File path header --&gt;
-            &lt;TextBlock Grid.Row=&quot;0&quot; Text=&quot;{Binding Context.FilePath}&quot; 
-                       FontSize=&quot;10&quot; Opacity=&quot;0.7&quot; Margin=&quot;5&quot;/&gt;
-            
-            &lt;!-- Main content editor --&gt;
-            &lt;TextBox Grid.Row=&quot;1&quot; Text=&quot;{Binding Context.Content}&quot; 
-                     AcceptsReturn=&quot;True&quot; AcceptsTab=&quot;True&quot;
-                     FontFamily=&quot;Consolas&quot; Margin=&quot;5&quot;/&gt;
-            
-            &lt;!-- Action buttons --&gt;
-            &lt;StackPanel Grid.Row=&quot;2&quot; Orientation=&quot;Horizontal&quot; 
-                        HorizontalAlignment=&quot;Right&quot; Margin=&quot;5&quot;&gt;
-              &lt;Button Content=&quot;Save&quot; Command=&quot;{Binding Context.SaveCommand}&quot;
-                      IsEnabled=&quot;{Binding Context.IsModified}&quot;/&gt;
-              &lt;Button Content=&quot;Save As&quot; Command=&quot;{Binding Context.SaveAsCommand}&quot;
-                      Margin=&quot;5,0,0,0&quot;/&gt;
-            &lt;/StackPanel&gt;
-          &lt;/Grid&gt;
+          &lt;ContentControl x:DataType=&quot;Document&quot; DataContext=&quot;{Binding Context}&quot;&gt;
+            &lt;Grid RowDefinitions=&quot;Auto,*,Auto&quot; x:DataType=&quot;local:FileDocument&quot;&gt;
+              &lt;!-- File path header --&gt;
+              &lt;TextBlock Grid.Row=&quot;0&quot; Text=&quot;{Binding FilePath}&quot;
+                         FontSize=&quot;10&quot; Opacity=&quot;0.7&quot; Margin=&quot;5&quot;/&gt;
+
+              &lt;!-- Main content editor --&gt;
+              &lt;TextBox Grid.Row=&quot;1&quot; Text=&quot;{Binding Content}&quot;
+                       AcceptsReturn=&quot;True&quot; AcceptsTab=&quot;True&quot;
+                       FontFamily=&quot;Consolas&quot; Margin=&quot;5&quot;/&gt;
+
+              &lt;!-- Action buttons --&gt;
+              &lt;StackPanel Grid.Row=&quot;2&quot; Orientation=&quot;Horizontal&quot;
+                          HorizontalAlignment=&quot;Right&quot; Margin=&quot;5&quot;&gt;
+                &lt;Button Content=&quot;Save&quot; Command=&quot;{Binding SaveCommand}&quot;
+                        IsEnabled=&quot;{Binding IsModified}&quot;/&gt;
+                &lt;Button Content=&quot;Save As&quot; Command=&quot;{Binding SaveAsCommand}&quot;
+                        Margin=&quot;5,0,0,0&quot;/&gt;
+              &lt;/StackPanel&gt;
+            &lt;/Grid&gt;
+          &lt;/ContentControl&gt;
         &lt;/DocumentTemplate&gt;
       &lt;/DocumentDock.DocumentTemplate&gt;
     &lt;/DocumentDock&gt;

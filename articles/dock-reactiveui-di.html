@@ -98,11 +98,11 @@ cd MyDockApp
 </li>
 <li><p><strong>Install the required packages</strong></p>
 <pre><code class="lang-bash">dotnet add package Dock.Avalonia
-dotnet add package Dock.Model.ReactiveUI
+dotnet add package Dock.Model.ReactiveUI.Reactive
 dotnet add package Dock.Avalonia.Themes.Fluent
 dotnet add package Microsoft.Extensions.DependencyInjection
 dotnet add package Microsoft.Extensions.Hosting
-dotnet add package ReactiveUI.Avalonia
+dotnet add package ReactiveUI.Avalonia.Reactive
 </code></pre>
 <p><strong>Optional packages:</strong></p>
 <pre><code class="lang-bash"># For serialization (choose one):
@@ -184,8 +184,19 @@ public class ViewLocator : IDataTemplate, IViewLocator
         return Resolve(data) is not null;
     }
 
-    IViewFor? IViewLocator.ResolveView&lt;T&gt;(T? viewModel, string? contract) where T : default =&gt;
-        viewModel is null ? null : Resolve(viewModel);
+    public IViewFor&lt;TViewModel&gt;? ResolveView&lt;TViewModel&gt;()
+        where TViewModel : class =&gt;
+        ResolveView&lt;TViewModel&gt;(null);
+
+    public IViewFor&lt;TViewModel&gt;? ResolveView&lt;TViewModel&gt;(string? contract)
+        where TViewModel : class =&gt;
+        _provider.GetService(typeof(IViewFor&lt;TViewModel&gt;)) as IViewFor&lt;TViewModel&gt;;
+
+    public IViewFor? ResolveView(object? instance) =&gt;
+        ResolveView(instance, null);
+
+    public IViewFor? ResolveView(object? instance, string? contract) =&gt;
+        instance is null ? null : Resolve(instance);
 }
 </code></pre>
 </li>
@@ -485,7 +496,7 @@ internal class Program
         =&gt; AppBuilder.Configure(() =&gt; CreateApp(provider))
             .UsePlatformDetect()
             .WithInterFont()
-            .UseReactiveUI()
+            .UseReactiveUI(static _ =&gt; { })
             .LogToTrace();
 
     private static App CreateApp(IServiceProvider provider) =&gt; new()
