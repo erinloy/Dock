@@ -122,7 +122,7 @@ public partial interface IFactory
     IDictionary<string, Func<IDockable?>>? DockableLocator { get; set; }
 
     /// <summary>
-    /// Creates list of type <see cref="IList{T}"/>.
+    /// Creates an observable list of type <see cref="IList{T}"/>.
     /// </summary>
     /// <typeparam name="T">The list item type.</typeparam>
     /// <param name="items">The initial list items.</param>
@@ -547,8 +547,8 @@ public partial interface IFactory
     /// <summary>
     /// Removes dockable from owner <see cref="IDock.VisibleDockables"/> collection, and call IDockable.OnClose.
     /// </summary>
-    /// <param name="dockable">The dockable to remove.</param>
-    void CloseDockable(IDockable dockable);
+    /// <param name="dockable">The dockable to remove, or <see langword="null"/> when no dockable is active.</param>
+    void CloseDockable(IDockable? dockable);
 
     /// <summary>
     /// Closes the dockable supplied as a command parameter.
